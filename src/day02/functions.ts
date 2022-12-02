@@ -37,13 +37,35 @@ const splitLines = function splitStringByLines(input: string): string[] {
   return input.split(/[\r\n]/);
 };
 
-const calcScore = function calculateScore(input: string): number {
+const calcMove = function calculateScore(input: string): number {
   return WIN_VALUES[input];
 };
 
-const calcOutcome = function calcOutcome(input: string) {
+const decode = function decodeOutcomeAndCalculateScore(input: string) {
   return OUTCOMES[input];
 };
+
+// const modulo = function modulo(i: number, d: number): number {
+//   return ((i % d) + d) % d;
+// };
+
+// const calcMove = function calculatePlayerVsElf(input: string) {
+//   const elf = input.charCodeAt(0) - 64;
+//   const player = input.charCodeAt(2) - 87;
+
+//   const outcome = modulo(player + 4 - elf, 3) * 3;
+
+//   return player + outcome;
+// };
+
+// const decode = function decodeMoveAndCalcScore(input: string) {
+//   const elf = input.charCodeAt(0) - 64;
+//   const outcome = input.charCodeAt(2) - 88;
+
+//   const player = modulo(outcome + elf + 2, 3);
+
+//   return player + outcome * 3;
+// };
 
 const calcTotal = function calculateScores(
   input: string[],
@@ -60,12 +82,12 @@ const calcTotal = function calculateScores(
 
 const day2p1 = function answer(input: string): number {
   const lines = splitLines(input);
-  return calcTotal(lines, calcScore);
+  return calcTotal(lines, calcMove);
 };
 
 const day2p2 = function answer(input: string): number {
   const lines = splitLines(input);
-  return calcTotal(lines, calcOutcome);
+  return calcTotal(lines, decode);
 };
 
 export { day2p1, day2p2 };
