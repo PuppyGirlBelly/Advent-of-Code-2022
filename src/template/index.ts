@@ -1,26 +1,27 @@
 import run from "aocrunner";
+import { day1, day2 } from "./functions.js";
 
 const parseInput = (rawInput: string) => rawInput;
 
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
-
-  return;
+  day1(input);
+  return "";
 };
 
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
-
-  return;
+  day2(input);
+  return "";
 };
 
 run({
   part1: {
     tests: [
-      // {
-      //   input: ``,
-      //   expected: "",
-      // },
+      {
+        input: ``,
+        expected: "",
+      },
     ],
     solution: part1,
   },
@@ -34,5 +35,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: false,
+  onlyTests: true,
 });
