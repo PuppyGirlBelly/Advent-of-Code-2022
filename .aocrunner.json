@@ -61,16 +61,16 @@
     },
     {
       "part1": {
-        "solved": false,
-        "result": null,
+        "solved": true,
+        "result": "WCZTHTMPS",
         "attempts": [],
-        "time": null
+        "time": 2.1387
       },
       "part2": {
-        "solved": false,
-        "result": null,
+        "solved": true,
+        "result": "BLSGJSDTS",
         "attempts": [],
-        "time": null
+        "time": 0.8359
       }
     },
     {
@@ -135,16 +135,16 @@
     },
     {
       "part1": {
-        "solved": false,
-        "result": null,
+        "solved": true,
+        "result": "15360",
         "attempts": [],
-        "time": null
+        "time": 0.10258
       },
       "part2": {
         "solved": false,
-        "result": null,
+        "result": "",
         "attempts": [],
-        "time": null
+        "time": 0.425399
       }
     },
     {
