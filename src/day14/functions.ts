@@ -3,150 +3,138 @@ interface Coordinates {
   y: number;
 }
 
-const splitLines = function splitStringByLines(input: string): string[] {
-  return input.split(/[\r\n]/);
-};
-
-const toCoords = function splitLineToCoordinates(input: string): Coordinates[] {
-  return input.split(" -> ").map((str) => {
-    const s = str.split(",");
-    return { x: Number(s[0]), y: Number(s[1]) };
-  });
-};
-
-const getLine = function getRangeFromCoords(
-  c1: Coordinates,
-  c2: Coordinates,
-): Coordinates[] {
+const getLine = function getRangeFromPoints(p1: string, p2: string): string[] {
   const range = [];
+  const [p1x, p1y] = p1.split(",").map((i) => Number(i));
+  const [p2x, p2y] = p2.split(",").map((i) => Number(i));
 
-  const xStart = Math.min(c1.x, c2.x);
-  const xEnd = Math.max(c1.x, c2.x);
-  const yStart = Math.min(c1.y, c2.y);
-  const yEnd = Math.max(c1.y, c2.y);
+  const xStart = Math.min(p1x, p2x);
+  const xEnd = Math.max(p1x, p2x);
+  const yStart = Math.min(p1y, p2y);
+  const yEnd = Math.max(p1y, p2y);
 
   for (let x = xStart; x <= xEnd; x += 1) {
     for (let y = yStart; y <= yEnd; y += 1) {
-      range.push({ x, y });
+      range.push(`{"x":${x},"y":${y}}`);
     }
   }
 
   return range;
 };
 
-const pointsToLines = function turnPointsToLines(
-  points: Coordinates[],
-): Coordinates[] {
-  let lines: Coordinates[] = [];
-
-  for (let i = 1; i < points.length; i += 1) {
-    const p1 = points[i - 1];
-    const p2 = points[i];
-    const line = getLine(p1, p2);
-    lines = lines.concat(line);
-  }
-
-  return lines;
-};
-
-const linesToMap = function turn2DArrayOfObjectsToSet<T>(
-  arr: T[][],
+const inputToFilled = function getInputAndTurnToSetOfFilledSquares(
+  input: string,
 ): Set<string> {
-  const set = new Set(arr.flat().map((elm) => JSON.stringify(elm)));
+  const arr = input
+    .split(/[\r\n]/)
+    .map((line) => line.split(" -> "))
+    .map((points) => {
+      let lines: string[] = [];
 
-  return set;
+      for (let i = 1; i < points.length; i += 1) {
+        const p1 = points[i - 1];
+        const p2 = points[i];
+        const line = getLine(p1, p2);
+        lines = lines.concat(line);
+      }
+
+      return lines;
+    })
+    .flat();
+
+  return new Set(arr);
 };
 
-const pointFilled = function setHasPoint(
-  map: Set<string>,
-  point: Coordinates,
-): boolean {
-  return map.has(`{"x":${point.x},"y":${point.y}}`);
-};
-
-const addPoint = function addPointToSet(map: Set<string>, point: Coordinates) {
-  map.add(`{"x":${point.x},"y":${point.y}}`);
-};
-
-const getAbyss = function getHighestArrayValue(map: Set<string>): number {
+const getLowest = function getHighestArrayValue(map: Set<string>): number {
   const arr: number[] = Array.from(map)
     .map((elm) => JSON.parse(elm))
     .map((coord) => coord.y);
-  return Math.max(...arr) + 1;
+  return Math.max(...arr);
+};
+
+const nextValidMove = function getNextPos(
+  filled: Set<string>,
+  point: Coordinates,
+): Coordinates {
+  const center = { x: point.x, y: point.y + 1 };
+  if (!filled.has(`{"x":${center.x},"y":${center.y}}`)) {
+    return center;
+  }
+
+  const left = { x: point.x - 1, y: point.y + 1 };
+  if (!filled.has(`{"x":${left.x},"y":${left.y}}`)) {
+    return left;
+  }
+
+  const right = { x: point.x + 1, y: point.y + 1 };
+  if (!filled.has(`{"x":${right.x},"y":${right.y}}`)) {
+    return right;
+  }
+
+  return point;
 };
 
 const sandFall = function letSandFall(
-  map: Set<string>,
-  sand: Coordinates,
-  depth: number,
+  filled: Set<string>,
+  point: Coordinates,
   maxDepth: number,
 ): Coordinates {
-  if (depth >= maxDepth) return sand;
+  if (point.y >= maxDepth) return point;
 
-  const newSand = { x: sand.x, y: sand.y + 1 };
+  const newPoint = nextValidMove(filled, point);
 
-  if (!pointFilled(map, newSand)) {
-    return sandFall(map, newSand, depth + 1, maxDepth);
-  }
-  newSand.x -= 1;
-  if (!pointFilled(map, newSand)) {
-    return sandFall(map, newSand, depth + 1, maxDepth);
-  }
-  newSand.x += 2;
-  if (!pointFilled(map, newSand)) {
-    return sandFall(map, newSand, depth + 1, maxDepth);
+  if (point.x !== newPoint.x && point.y !== newPoint.y) {
+    return sandFall(filled, point, maxDepth);
   }
 
-  return sand;
+  return point;
 };
 
 const day1 = function answer(input: string) {
-  const lines = splitLines(input)
-    .map((line) => toCoords(line))
-    .map((points) => pointsToLines(points));
-  const map = linesToMap(lines);
+  const map = inputToFilled(input);
+  const ORIGIN = { x: 500, y: 0 };
 
-  const sandSource = { x: 500, y: 0 };
-  const abyss = getAbyss(map);
-  let sandAmount = 0;
+  const abyss = getLowest(map);
+  let sandCount = 0;
   let falling = true;
 
-  while (falling) {
-    const sand = sandSource;
-    const newSand = sandFall(map, sand, 0, abyss);
+  // while (falling) {
+  for (let _i = 0; _i < 25; _i++) {
+    const sand = ORIGIN;
+    const newSand = sandFall(map, sand, abyss);
     if (newSand.y >= abyss) {
       falling = false;
     } else {
-      addPoint(map, newSand);
-      sandAmount += 1;
+      map.add(`{"x":${newSand.x},"y":${newSand.y}}`);
+      sandCount += 1;
     }
   }
 
-  return sandAmount;
+  return sandCount;
 };
 
 const day2 = function answer(input: string) {
-  const lines = splitLines(input)
-    .map((line) => toCoords(line))
-    .map((points) => pointsToLines(points));
-  const map = linesToMap(lines);
+  // const lines = splitLines(input)
+  //   .map((line) => toCoords(line))
+  //   .map((points) => pointsToLines(points));
+  // const map = linesToMap(lines);
 
-  const sandSource = { x: 500, y: 0 };
-  let sandAmount = 0;
-  let falling = true;
-  const abyss = getAbyss(map);
+  // const sandSource = { x: 500, y: 0 };
+  // let sandAmount = 0;
+  // let falling = true;
+  // const abyss = getAbyss(map);
 
-  while (falling) {
-    const sand = sandSource;
-    const newSand = sandFall(map, sand, 0, abyss);
-    if (newSand.x === 500 && newSand.y === 0) {
-      falling = false;
-    }
-    addPoint(map, newSand);
-    sandAmount += 1;
-  }
+  // while (falling) {
+  //   const sand = sandSource;
+  //   const newSand = sandFall(map, sand, 0, abyss);
+  //   if (newSand.x === 500 && newSand.y === 0) {
+  //     falling = false;
+  //   }
+  //   addPoint(map, newSand);
+  //   sandAmount += 1;
+  // }
 
-  return sandAmount;
+  // return sandAmount;
 };
 
 export { day1, day2 };
