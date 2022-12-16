@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 interface Coordinates {
   x: number;
   y: number;
@@ -35,21 +36,13 @@ const toSensor = function stringToSensor(input: string): Sensor {
   return { x, y, range };
 };
 
-const toBeacon = function stringToBeacon(input: string): Coordinates {
-  const [_x, _y, beaconX, beaconY] = input
-    .match(/-?\d+/g)
-    ?.map((num) => Number(num)) ?? [0, 0, 0, 0];
-
-  return { x: beaconX, y: beaconY };
-};
-
-const occupiedInRow = function occupiedSpacesSenorAndRow(
+const horizontalRange = function getSensorsRangeByRow(
   s: Sensor,
   row: number,
 ): Range {
   const distance = Math.abs(s.y - row);
   if (distance > s.range) {
-    return { start: { x: 0, y: 0 }, end: { x: 0, y: 0 }, };
+    return { start: { x: 0, y: 0 }, end: { x: 0, y: 0 } };
   }
 
   const halfWidth = s.range - distance;
@@ -59,6 +52,25 @@ const occupiedInRow = function occupiedSpacesSenorAndRow(
   return { start: { x: x1, y: row }, end: { x: x2, y: row } };
 };
 
+const notInSensor = function checkIfPointIsInsideAnySensor(
+  x: number,
+  y: number,
+  sensors: Sensor[],
+): boolean {
+  let isOutside = true;
+
+  for (let i = 0; i < sensors.length; i += 1) {
+    const s = sensors[i];
+    const distance = getDistance(s.x, s.y, x, y);
+
+    if (distance <= s.range) {
+      isOutside = false;
+    }
+  }
+
+  return isOutside;
+};
+
 const day1 = function answer(input: string) {
   const sensors = splitLines(input).map((line) => toSensor(line));
   const checkLine = 2000000;
@@ -66,7 +78,7 @@ const day1 = function answer(input: string) {
   let highest = Number.NEGATIVE_INFINITY;
 
   sensors.forEach((s) => {
-    const range = occupiedInRow(s, checkLine);
+    const range = horizontalRange(s, checkLine);
     if (range.start.x !== 0 && range.end.x !== 0) {
       lowest = range.start.x < lowest ? range.start.x : lowest;
       highest = range.end.x > highest ? range.end.x : highest;
@@ -76,26 +88,35 @@ const day1 = function answer(input: string) {
   return highest - lowest;
 };
 
+/* I'll admit it, I got stumped. I couldn't figure out today's Part 2 so I
+ * ended up using another person's work as basis for my own...
+ * https://www.reddit.com/r/adventofcode/comments/zmcn64/comment/j0af7mb/?utm_source=share&utm_medium=web2x&context=3
+ * https://gist.github.com/bluepichu/1e967aa8322bd2e4fd3913aefcbeaa9b
+ */
 const day2 = function answer(input: string) {
   const sensors = splitLines(input).map((line) => toSensor(line));
-  const max = 20;
+  const limit = 4000000;
 
-  for (let row = 0; row <= max; row += 1) {
-    const occupied = Array(max).fill("░");
-
-    sensors.forEach((s) => {
-      const range = occupiedInRow(s, row);
-      if (range.start.x !== 0 && range.end.x !== 0) {
-        // console.log(`start: ${start} | end: ${end}`);
-        const size = range.end.x - range.start.x;
-        const filled = Array(size).fill("█");
-        occupied.splice(range.start.x, size, filled);
+  for (let i = 0; i < sensors.length; i += 1) {
+    const sensor = sensors[i];
+    for (let xMod = -1; xMod <= 1; xMod += 1) {
+      for (let yMod = -1; yMod <= 1; yMod += 1) {
+        for (let permX = 0; permX <= sensor.range + 1; permX += 1) {
+          const permY = sensor.range + 1 - permX;
+          const x = sensor.x + permX * xMod;
+          if (x >= 0 && x <= limit) {
+            const y = sensor.y + permY * yMod;
+            if (y >= 0 && y <= limit) {
+              if (notInSensor(x, y, sensors)) {
+                // console.log(`${x}, ${y}`);
+                return x * 4000000 + y;
+              }
+            }
+          }
+        }
       }
-    });
-    console.log(`${row.toString().padStart(2)}: ${occupied.join("")}`);
+    }
   }
-
-  return 0;
 };
 
 export { day1, day2 };
